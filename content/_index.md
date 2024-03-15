@@ -77,6 +77,22 @@ let min (type a)
   if Compare.( < ) x y then x else y
 ```
 
+Named first-class module parameter (module-style)
+{.label}
+
+```ocaml {.mli}
+val min : compare:(module Comparable.S with type t = 'a) -> 'a -> 'a -> 'a
+```
+```ocaml {.ml}
+let min (type a)
+  ~compare:(module Compare : Comparable.S with type t = a)
+  (x : a) (y : a) =
+  if Compare.( < ) x y then x else y
+```
+
+As far as I can tell there is no way to express an optional parameter in this way, even if you provide a default.
+{.caption}
+
 First-class module parameter (value-style)
 {.label}
 
@@ -90,6 +106,41 @@ let min (type a)
   let module Compare = (val compare) in
   if Compare.( < ) x y then x else y
 ```
+
+Named first-class module parameter (value-style)
+{.label}
+
+```ocaml {.mli}
+val min : compare:(module Comparable.S with type t = 'a) -> 'a -> 'a -> 'a
+```
+```ocaml {.ml}
+let min (type a)
+  ~(compare : (module Comparable.S with type t = a))
+  (x : a) (y : a) =
+  let module Compare = (val compare) in
+  if Compare.( < ) x y then x else y
+```
+
+Named optional first-class module parameter with default (value-style)
+{.label}
+
+```ocaml {.mli}
+val min : ?compare:(module Comparable.S with type t = 'a) -> 'a -> 'a -> 'a
+```
+```ocaml {.ml}
+let min (type a)
+  ?(compare : (module Comparable.S with type t = a) = (module struct
+    type t = a
+    let (<) _ _ = false
+    (* etc *)
+  end))
+  (x : a) (y : a) =
+  let module Compare = (val compare) in
+  if Compare.( < ) x y then x else y
+```
+
+The inline module is only necessary if you need to refer to type variables from the signature. For simpler module types, you can provide a named module as the default with `?(m : S = (module M))`.
+{.caption}
 
 First-class module argument
 {.label}
